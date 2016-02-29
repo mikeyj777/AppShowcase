@@ -8,9 +8,11 @@
 
 import UIKit
 import Alamofire
+import Firebase
 
 class PostCell: UITableViewCell {
 
+    @IBOutlet weak var imgLikes: UIImageView!
     @IBOutlet weak var profileImg:  UIImageView!
     @IBOutlet weak var showcaseImg: UIImageView!
     @IBOutlet weak var descriptionText: UITextView!
@@ -18,9 +20,14 @@ class PostCell: UITableViewCell {
     
     var post: Post!
     var request: Request?
+    var likeRef:Firebase!
     
     override func awakeFromNib() {
         super.awakeFromNib()
+        
+        let tap = UITapGestureRecognizer(target: self, action: "likeTapped:")
+        tap.numberOfTapsRequired = 1
+        imgLikes.addGestureRecognizer(tap)
         
     }
 
@@ -34,6 +41,8 @@ class PostCell: UITableViewCell {
         self.post = post
         self.descriptionText.text = post.postDescription
         self.likesLbl.text = "\(post.likes)"
+        
+        self.likeRef = DataService.ds.REF_USER_Current.childByAppendingPath("likes").childByAppendingPath(self.post.postKey)
         
         if post.imageUrl != nil {
             self.showcaseImg.hidden = false
@@ -57,7 +66,42 @@ class PostCell: UITableViewCell {
             self.showcaseImg.hidden = true
         }
         
+        
+        
+            likeRef.observeSingleEventOfType(.Value, withBlock: { snapshot in
+            
+                if let doesNotExist = snapshot.value as? NSNull {
+                    //firebase:  data that does not exist in .value is stored as NSNULL
+                    //if we're here, we have not liked this post
+                    
+                    self.imgLikes.image = UIImage(named: "heart-empty")
+                } else {
+                    self.imgLikes.image = UIImage(named: "heart-full")
+                }
+                
+            }
+        )
+        
+        
     }
     
-
+    func likeTapped(sender:UITapGestureRecognizer!) {
+        likeRef.observeSingleEventOfType(.Value, withBlock: { snapshot in
+            
+            if let doesNotExist = snapshot.value as? NSNull {
+                //firebase:  data that does not exist in .value is stored as NSNULL
+                //if we're here, we have not liked this post
+                
+                self.imgLikes.image = UIImage(named: "heart-full")
+                self.post.adjustLikes(true)
+                self.likeRef.setValue(true)
+                self.likeRef.setValue(true)
+            } else {
+                self.imgLikes.image = UIImage(named: "heart-empty")
+                self.post.adjustLikes(false)
+                self.likeRef.removeValue()
+            }
+            
+        })
+    }
 }

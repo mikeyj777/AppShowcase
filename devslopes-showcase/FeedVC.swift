@@ -185,6 +185,8 @@ class FeedVC: UIViewController, UITableViewDelegate, UITableViewDataSource, UIIm
                 self.postToFirebase(nil)
             }
             
+            
+            
         }
         
     }
